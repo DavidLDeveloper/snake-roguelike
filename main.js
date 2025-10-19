@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const scoreElement = document.getElementById("score");
   const highScoreElement = document.getElementById("highScore");
   const gameOverModal = document.getElementById("game-over-modal");
+  const gameStartModal = document.getElementById("game-start-modal");
   const finalScoreElement = document.getElementById("final-score");
   const restartBtn = document.getElementById("restart-btn");
+  const startBtn = document.getElementById("start-btn");
 
   // On-screen controls
   const upBtn = document.getElementById("up-btn");
@@ -44,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Hide game over screen
     gameOverModal.classList.add("hidden");
+    gameStartModal.classList.add("hidden");
 
     // Start game loop
     if (gameInterval) clearInterval(gameInterval);
@@ -187,6 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Event Listeners
   document.addEventListener("keydown", handleKeyPress);
   restartBtn.addEventListener("click", init);
+  startBtn.addEventListener("click", init);
 
   // On-screen button listeners
   upBtn.addEventListener("click", () => {
@@ -215,5 +219,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initial game start
-  init();
+  //   init();
 });
