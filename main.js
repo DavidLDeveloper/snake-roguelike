@@ -20,11 +20,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialSpeed = 200; // ms per update
 
   // Game state
-  let snake, food, direction, score, highScore, gameInterval, speed;
+  let snake,
+    food,
+    direction,
+    score,
+    highScore,
+    gameInterval,
+    speed,
+    debounce,
+    stair,
+    nextLevel;
   let currentDirection; // Used to prevent 180-degree turns
+  let lvlProgress;
+  let showStair;
 
   const init = () => {
     // Initial snake position
+
     snake = [
       { x: 5, y: 7 },
       { x: 4, y: 7 },
@@ -38,6 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
     highScore = localStorage.getItem("snakeHighScore") || 0;
     scoreElement.textContent = score;
     highScoreElement.textContent = highScore;
+    // initial State
+    lvlProgress = 0;
+    nextLevel = 1;
+    showStair = false;
+    stair = {};
     // Game speed
     speed = initialSpeed;
 
@@ -67,6 +84,20 @@ document.addEventListener("DOMContentLoaded", () => {
     food = foodPosition;
   };
 
+  const placeStair = () => {
+    let stairPosition = { x: 0, y: 0 };
+    do {
+      stairPosition.x = Math.floor(Math.random() * width);
+      stairPosition.y = Math.floor(Math.random() * height);
+    } while (
+      snake.some(
+        (segment) =>
+          segment.x === stairPosition.x && segment.y === stairPosition.y
+      )
+    );
+    stair = stairPosition;
+  };
+
   const render = () => {
     let screen = "";
     // Top wall
@@ -80,13 +111,16 @@ document.addEventListener("DOMContentLoaded", () => {
           .slice(1)
           .some((segment) => segment.x === x && segment.y === y);
         const isFood = food.x === x && food.y === y;
+        const isStair = stair.x === x && stair.y === y;
 
         if (isSnakeHead) {
           screen += "@";
         } else if (isSnakeBody) {
           screen += "#";
-        } else if (isFood) {
+        } else if (isFood && !showStair) {
           screen += "*";
+        } else if (isStair && showStair) {
+          screen += ">";
         } else {
           screen += " ";
         }
@@ -104,18 +138,42 @@ document.addEventListener("DOMContentLoaded", () => {
       x: snake[0].x + direction.x,
       y: snake[0].y + direction.y,
     };
+    debounce = false;
     snake.unshift(head);
 
     // Check for food collision
-    if (head.x === food.x && head.y === food.y) {
+    if (head.x === food.x && head.y === food.y && !showStair) {
       score++;
       scoreElement.textContent = score;
-      placeFood();
+      // Progress level progress
+      lvlProgress += 1;
+      if (lvlProgress < nextLevel) {
+        placeFood();
+      } else {
+        showStair = true;
+        placeStair();
+      }
 
       // Increase speed slightly
       speed = Math.max(50, speed * 0.98);
       clearInterval(gameInterval);
       gameInterval = setInterval(gameLoop, speed);
+
+      // Check for stair collision
+    } else if (head.x === stair.x && head.y === stair.y && showStair) {
+      showStair = false;
+      nextLevel += 1;
+      snake = snake.map((segment, index) => {
+        if (index < 3) {
+          return { x: 5 - index, y: 7 };
+        } else {
+          return { x: 3, y: 7 };
+        }
+      });
+      direction = { x: 1, y: 0 };
+      currentDirection = "right";
+
+      placeFood();
     } else {
       snake.pop();
     }
@@ -161,30 +219,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleKeyPress = (e) => {
     switch (e.key) {
       case "ArrowUp":
-        if (currentDirection !== "down") {
+        if (currentDirection !== "down" && !debounce) {
           direction = { x: 0, y: -1 };
           currentDirection = "up";
         }
         break;
       case "ArrowDown":
-        if (currentDirection !== "up") {
+        if (currentDirection !== "up" && !debounce) {
           direction = { x: 0, y: 1 };
           currentDirection = "down";
         }
         break;
       case "ArrowLeft":
-        if (currentDirection !== "right") {
+        if (currentDirection !== "right" && !debounce) {
           direction = { x: -1, y: 0 };
           currentDirection = "left";
         }
         break;
       case "ArrowRight":
-        if (currentDirection !== "left") {
+        if (currentDirection !== "left" && !debounce) {
           direction = { x: 1, y: 0 };
           currentDirection = "right";
         }
         break;
     }
+    debounce = true;
   };
 
   // Event Listeners
