@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     speed,
     debounce,
     stair,
+    treasure,
     nextLevel;
   let currentDirection; // Used to prevent 180-degree turns
   let lvlProgress;
@@ -70,18 +71,31 @@ document.addEventListener("DOMContentLoaded", () => {
     gameInterval = setInterval(gameLoop, speed);
   };
 
+  const verifyEmptySpace = (x, y) => {
+    return (
+      snake.some((segment) => segment.x === x && segment.y === y) ||
+      (food?.x === x && food?.y === y) ||
+      (treasure?.x === x && treasure?.y === y)
+    );
+  };
+
   const placeFood = () => {
     let foodPosition = { x: 0, y: 0 };
     do {
       foodPosition.x = Math.floor(Math.random() * width);
       foodPosition.y = Math.floor(Math.random() * height);
-    } while (
-      snake.some(
-        (segment) =>
-          segment.x === foodPosition.x && segment.y === foodPosition.y
-      )
-    );
+    } while (verifyEmptySpace(foodPosition.x, foodPosition.y));
+
     food = foodPosition;
+  };
+
+  const placeTreasure = () => {
+    let treasurePosistion = { x: 0, y: 0 };
+    do {
+      treasurePosistion.x = Math.floor(Math.random() * width);
+      treasurePosistion.y = Math.floor(Math.random() * height);
+    } while (verifyEmptySpace(treasurePosistion.x, treasurePosistion.ys));
+    treasure = treasurePosistion;
   };
 
   const placeStair = () => {
@@ -89,12 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     do {
       stairPosition.x = Math.floor(Math.random() * width);
       stairPosition.y = Math.floor(Math.random() * height);
-    } while (
-      snake.some(
-        (segment) =>
-          segment.x === stairPosition.x && segment.y === stairPosition.y
-      )
-    );
+    } while (verifyEmptySpace(stairPosition.x, stairPosition.y));
     stair = stairPosition;
   };
 
@@ -112,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
           .some((segment) => segment.x === x && segment.y === y);
         const isFood = food.x === x && food.y === y;
         const isStair = stair.x === x && stair.y === y;
+        const isTreasure = treasure?.x === x && treasure?.y === y;
 
         if (isSnakeHead) {
           screen += "@";
@@ -121,6 +131,8 @@ document.addEventListener("DOMContentLoaded", () => {
           screen += "*";
         } else if (isStair && showStair) {
           screen += ">";
+        } else if (isTreasure) {
+          screen += "$";
         } else {
           screen += " ";
         }
@@ -142,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     snake.unshift(head);
 
     // Check for food collision
-    if (head.x === food.x && head.y === food.y && !showStair) {
+    if (checkItemCollision(food) && !showStair) {
       score++;
       scoreElement.textContent = score;
       // Progress level progress
@@ -150,17 +162,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (lvlProgress < nextLevel) {
         placeFood();
       } else {
+        // End of level -- show stair, treasure, and powerups.
         showStair = true;
         placeStair();
+        placeTreasure();
       }
 
       // Increase speed slightly
       speed = Math.max(50, speed * 0.98);
       clearInterval(gameInterval);
       gameInterval = setInterval(gameLoop, speed);
-
-      // Check for stair collision
-    } else if (head.x === stair.x && head.y === stair.y && showStair) {
+    } else if (checkItemCollision(stair) && showStair) {
+      // Check for stair collision -- Adance level.
       showStair = false;
       nextLevel += 1;
       snake = snake.map((segment, index) => {
@@ -174,9 +187,18 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDirection = "right";
 
       placeFood();
+    } else if (checkItemCollision(treasure)) {
+      score++;
+      scoreElement.textContent = score;
+      treasure = null;
     } else {
       snake.pop();
     }
+  };
+
+  const checkItemCollision = (item) => {
+    const { x, y } = snake[0];
+    return item?.x === x && item?.y === y;
   };
 
   const checkCollision = () => {
