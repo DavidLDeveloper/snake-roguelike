@@ -149,17 +149,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const isPotion = potion?.x === x && potion?.y === y;
 
         if (isSnakeHead) {
-          screen += "@";
+          screen += '<span class="text-emerald-400">@</span>';
         } else if (isSnakeBody) {
-          screen += "#";
+          screen += '<span class="text-emerald-200">#</span>';
         } else if (isFood && !showStair) {
-          screen += "*";
+          screen += '<span class="text-orange-400">*</span>';
         } else if (isStair && showStair) {
           screen += ">";
         } else if (isTreasure) {
-          screen += "$";
+          screen += '<span class="text-yellow-300">$</span>';
         } else if (isPotion) {
-          screen += "!";
+          screen += '<span class="text-purple-500">!</span>';
         } else {
           screen += " ";
         }
@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Bottom wall
     screen += "+" + "-".repeat(width) + "+";
-    gameBoardElement.textContent = screen;
+    gameBoardElement.innerHTML = screen;
   };
 
   const moveSnake = () => {
@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(messageTimeout);
     message.innerText = msg;
     messageTimeout = setTimeout(() => {
-      message.innerText = "---";
+      message.innerText = "";
     }, 5000);
   };
   function getRandomInt(min, max) {
