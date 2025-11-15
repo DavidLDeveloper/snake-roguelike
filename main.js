@@ -33,9 +33,11 @@ document.addEventListener("DOMContentLoaded", () => {
     stair,
     treasure,
     potion,
+    level,
     nextLevel,
     levelLength,
-    multiplier;
+    multiplier,
+    messageTimeout;
   let currentDirection; // Used to prevent 180-degree turns
   let lvlProgress;
   let showStair;
@@ -58,9 +60,10 @@ document.addEventListener("DOMContentLoaded", () => {
     scoreElement.textContent = score;
     highScoreElement.textContent = highScore;
     // initial State
+    level = 1;
     lvlProgress = 0;
-    levelLength = 1;
-    nextLevel = 1;
+    levelLength = 5;
+    nextLevel = levelLength;
     showStair = false;
     stair = {};
     potion = null;
@@ -202,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showStair = false;
       potion = null;
       treasure = [];
+      level++;
       nextLevel += levelLength;
       snake = snake.map((segment, index) => {
         if (index < 3) {
@@ -214,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDirection = "right";
 
       placeFood();
-      printMessage(`Level ${lvlProgress / levelLength + 1}`);
+      printMessage(`Level ${level}`);
     } else if (checkTreasureCollision()) {
       score += multiplier;
       scoreElement.textContent = score;
@@ -222,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (checkItemCollision(potion)) {
       const num = getRandomInt(1, 3);
       potion = null;
-      console.log(num);
       switch (num) {
         case 1:
           multiplier += 1;
@@ -279,8 +282,9 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const printMessage = (msg) => {
+    clearTimeout(messageTimeout);
     message.innerText = msg;
-    setTimeout(() => {
+    messageTimeout = setTimeout(() => {
       message.innerText = "---";
     }, 5000);
   };
