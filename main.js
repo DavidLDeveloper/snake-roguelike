@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const restartBtn = document.getElementById("restart-btn");
   const startBtn = document.getElementById("start-btn");
 
+  const message = document.getElementById("game-message");
+
   // On-screen controls
   const upBtn = document.getElementById("up-btn");
   const downBtn = document.getElementById("down-btn");
@@ -30,7 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
     debounce,
     stair,
     treasure,
-    nextLevel;
+    potion,
+    nextLevel,
+    levelLength,
+    multiplier;
   let currentDirection; // Used to prevent 180-degree turns
   let lvlProgress;
   let showStair;
@@ -48,25 +53,30 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDirection = "right";
     // Score
     score = 0;
+    multiplier = 1;
     highScore = localStorage.getItem("snakeHighScore") || 0;
     scoreElement.textContent = score;
     highScoreElement.textContent = highScore;
     // initial State
     lvlProgress = 0;
+    levelLength = 1;
     nextLevel = 1;
     showStair = false;
     stair = {};
+    potion = null;
+    treasure = null;
     // Game speed
     speed = initialSpeed;
 
     // Place first food
     placeFood();
 
-    // Hide game over screen
+    // Hide game over screens
     gameOverModal.classList.add("hidden");
     gameStartModal.classList.add("hidden");
 
     // Start game loop
+    printMessage("Level 1");
     if (gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(gameLoop, speed);
   };
@@ -107,6 +117,15 @@ document.addEventListener("DOMContentLoaded", () => {
     stair = stairPosition;
   };
 
+  const placePotion = () => {
+    let potionPosition = { x: 0, y: 0 };
+    do {
+      potionPosition.x = Math.floor(Math.random() * width);
+      potionPosition.y = Math.floor(Math.random() * height);
+    } while (verifyEmptySpace(potionPosition.x, potionPosition.y));
+    potion = potionPosition;
+  };
+
   const render = () => {
     let screen = "";
     // Top wall
@@ -122,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const isFood = food.x === x && food.y === y;
         const isStair = stair.x === x && stair.y === y;
         const isTreasure = treasure?.x === x && treasure?.y === y;
+        const isPotion = potion?.x === x && potion?.y === y;
 
         if (isSnakeHead) {
           screen += "@";
@@ -133,6 +153,8 @@ document.addEventListener("DOMContentLoaded", () => {
           screen += ">";
         } else if (isTreasure) {
           screen += "$";
+        } else if (isPotion) {
+          screen += "!";
         } else {
           screen += " ";
         }
@@ -155,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Check for food collision
     if (checkItemCollision(food) && !showStair) {
-      score++;
+      score += multiplier;
       scoreElement.textContent = score;
       // Progress level progress
       lvlProgress += 1;
@@ -166,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showStair = true;
         placeStair();
         placeTreasure();
+        placePotion();
       }
 
       // Increase speed slightly
@@ -173,9 +196,11 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(gameInterval);
       gameInterval = setInterval(gameLoop, speed);
     } else if (checkItemCollision(stair) && showStair) {
-      // Check for stair collision -- Adance level.
+      // Check for stair collision -- Advance level.
       showStair = false;
-      nextLevel += 1;
+      potion = null;
+      treasure = null;
+      nextLevel += levelLength;
       snake = snake.map((segment, index) => {
         if (index < 3) {
           return { x: 5 - index, y: 7 };
@@ -187,10 +212,30 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDirection = "right";
 
       placeFood();
+      printMessage(`Level ${lvlProgress / levelLength + 1}`);
     } else if (checkItemCollision(treasure)) {
-      score++;
+      score += multiplier;
       scoreElement.textContent = score;
       treasure = null;
+    } else if (checkItemCollision(potion)) {
+      const num = getRandomInt(1, 2);
+      console.log(num);
+      switch (num) {
+        case 1:
+          multiplier += 1;
+          speed = Math.max(50, speed * 0.98);
+          potion = null;
+          printMessage(`Speed Potion: Multiplier x${multiplier}`);
+          break;
+        case 2:
+          printMessage(`Shrinking Potion`);
+          potion = null;
+          snake = snake.slice(0, snake.length - 5);
+          break;
+        case 3:
+          printMessage(`Wealth Potion`);
+          break;
+      }
     } else {
       snake.pop();
     }
@@ -217,6 +262,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return false;
   };
+
+  const printMessage = (msg) => {
+    message.innerText = msg;
+    setTimeout(() => {
+      message.innerText = "---";
+    }, 5000);
+  };
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max) + 1;
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
 
   const gameOver = () => {
     clearInterval(gameInterval);
