@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStair = false;
     stair = {};
     potion = null;
-    treasure = null;
+    treasure = [];
     // Game speed
     speed = initialSpeed;
 
@@ -105,7 +105,8 @@ document.addEventListener("DOMContentLoaded", () => {
       treasurePosistion.x = Math.floor(Math.random() * width);
       treasurePosistion.y = Math.floor(Math.random() * height);
     } while (verifyEmptySpace(treasurePosistion.x, treasurePosistion.ys));
-    treasure = treasurePosistion;
+    // treasure = treasurePosistion;
+    treasure.push(treasurePosistion);
   };
 
   const placeStair = () => {
@@ -140,7 +141,8 @@ document.addEventListener("DOMContentLoaded", () => {
           .some((segment) => segment.x === x && segment.y === y);
         const isFood = food.x === x && food.y === y;
         const isStair = stair.x === x && stair.y === y;
-        const isTreasure = treasure?.x === x && treasure?.y === y;
+        // const isTreasure = treasure?.x === x && treasure?.y === y;\
+        const isTreasure = treasure.some((t) => t?.x === x && t?.y === y);
         const isPotion = potion?.x === x && potion?.y === y;
 
         if (isSnakeHead) {
@@ -199,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Check for stair collision -- Advance level.
       showStair = false;
       potion = null;
-      treasure = null;
+      treasure = [];
       nextLevel += levelLength;
       snake = snake.map((segment, index) => {
         if (index < 3) {
@@ -213,27 +215,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
       placeFood();
       printMessage(`Level ${lvlProgress / levelLength + 1}`);
-    } else if (checkItemCollision(treasure)) {
+    } else if (checkTreasureCollision()) {
       score += multiplier;
       scoreElement.textContent = score;
-      treasure = null;
+      snake.pop();
     } else if (checkItemCollision(potion)) {
-      const num = getRandomInt(1, 2);
+      const num = getRandomInt(1, 3);
+      potion = null;
       console.log(num);
       switch (num) {
         case 1:
           multiplier += 1;
           speed = Math.max(50, speed * 0.98);
-          potion = null;
           printMessage(`Speed Potion: Multiplier x${multiplier}`);
           break;
         case 2:
           printMessage(`Shrinking Potion`);
-          potion = null;
           snake = snake.slice(0, snake.length - 5);
           break;
         case 3:
           printMessage(`Wealth Potion`);
+          placeTreasure();
+          placeTreasure();
+          placeTreasure();
           break;
       }
     } else {
@@ -244,6 +248,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const checkItemCollision = (item) => {
     const { x, y } = snake[0];
     return item?.x === x && item?.y === y;
+  };
+
+  const checkTreasureCollision = () => {
+    let isCollision = false;
+    treasure.forEach((item, index) => {
+      if (checkItemCollision(item)) {
+        treasure.splice(index, 1);
+        isCollision = true;
+      }
+    });
+    return isCollision;
   };
 
   const checkCollision = () => {
