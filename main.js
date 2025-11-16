@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
     highScore,
     gameInterval,
     speed,
-    debounce,
     stair,
     treasure,
     potion,
@@ -37,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     nextLevel,
     levelLength,
     multiplier,
+    moveBuffer,
     messageTimeout;
   let currentDirection; // Used to prevent 180-degree turns
   let lvlProgress;
@@ -44,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const init = () => {
     // Initial snake position
-
     snake = [
       { x: 5, y: 7 },
       { x: 4, y: 7 },
@@ -68,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
     stair = {};
     potion = null;
     treasure = [];
+    moveBuffer = [];
     // Game speed
     speed = initialSpeed;
 
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     do {
       treasurePosistion.x = Math.floor(Math.random() * width);
       treasurePosistion.y = Math.floor(Math.random() * height);
-    } while (verifyEmptySpace(treasurePosistion.x, treasurePosistion.ys));
+    } while (verifyEmptySpace(treasurePosistion.x, treasurePosistion.y));
     // treasure = treasurePosistion;
     treasure.push(treasurePosistion);
   };
@@ -173,11 +173,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const moveSnake = () => {
+    direction = moveBuffer.shift() || direction;
     const head = {
-      x: snake[0].x + direction.x,
-      y: snake[0].y + direction.y,
+      x: snake[0].x + direction?.x,
+      y: snake[0].y + direction?.y,
     };
-    debounce = false;
     snake.unshift(head);
 
     // Check for food collision
@@ -315,33 +315,35 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const handleKeyPress = (e) => {
+    let newDirection;
     switch (e.key) {
       case "ArrowUp":
-        if (currentDirection !== "down" && !debounce) {
-          direction = { x: 0, y: -1 };
+        if (currentDirection !== "down") {
+          newDirection = { x: 0, y: -1 };
           currentDirection = "up";
         }
         break;
       case "ArrowDown":
-        if (currentDirection !== "up" && !debounce) {
-          direction = { x: 0, y: 1 };
+        if (currentDirection !== "up") {
+          newDirection = { x: 0, y: 1 };
           currentDirection = "down";
         }
         break;
       case "ArrowLeft":
-        if (currentDirection !== "right" && !debounce) {
-          direction = { x: -1, y: 0 };
+        if (currentDirection !== "right") {
+          newDirection = { x: -1, y: 0 };
           currentDirection = "left";
         }
         break;
       case "ArrowRight":
-        if (currentDirection !== "left" && !debounce) {
-          direction = { x: 1, y: 0 };
+        if (currentDirection !== "left") {
+          newDirection = { x: 1, y: 0 };
           currentDirection = "right";
         }
         break;
     }
-    debounce = true;
+
+    moveBuffer.push(newDirection);
   };
 
   // Event Listeners
