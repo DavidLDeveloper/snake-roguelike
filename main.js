@@ -36,11 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     nextLevel,
     levelLength,
     multiplier,
-    moveBuffer,
     messageTimeout;
   let currentDirection; // Used to prevent 180-degree turns
   let lvlProgress;
   let showStair;
+
+  let moveBuffer = [];
 
   const init = () => {
     // Initial snake position
