@@ -196,11 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
         placeTreasure();
         placePotion();
       }
-
-      // Increase speed slightly
-      speed = Math.max(50, speed * 0.98);
-      clearInterval(gameInterval);
-      gameInterval = setInterval(gameLoop, speed);
     } else if (checkItemCollision(stair) && showStair) {
       // Check for stair collision -- Advance level.
       showStair = false;
@@ -230,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
       switch (num) {
         case 1:
           multiplier += 1;
-          speed = Math.max(50, speed * 0.98);
+          speed = Math.max(50, speed * 0.92);
           printMessage(`Speed Potion: Multiplier x${multiplier}`);
           break;
         case 2:
